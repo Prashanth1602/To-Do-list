@@ -1,75 +1,87 @@
-$(document).ready(function () {
-    // Load tasks from localStorage
-    function loadTasks() {
-      const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-      tasks.forEach((task) => {
-        addTaskToDOM(task.text, task.completed);
-      });
+document.addEventListener("DOMContentLoaded", () => {
+  function loadTasks() {
+    const tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    tasks.forEach((task) => {
+      addTaskToDOM(task.text, task.completed);
+    });
+  }
+
+  function saveTasks() {
+    const tasks = [];
+    document.querySelectorAll("#taskList .task-item").forEach((item) => {
+      const text = item.querySelector("span").textContent;
+      const completed = item.querySelector("span").classList.contains("completed");
+      tasks.push({ text, completed });
+    });
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }
+
+  function addTaskToDOM(text, completed = false) {
+    const taskList = document.getElementById("taskList");
+
+    const taskItem = document.createElement("li");
+    taskItem.classList.add("task-item");
+
+    const taskSpan = document.createElement("span");
+    taskSpan.textContent = text;
+    if (completed) {
+      taskSpan.classList.add("completed");
     }
-  
-    // Save tasks to localStorage
-    function saveTasks() {
-      const tasks = [];
-      $("#taskList .task-item").each(function () {
-        const text = $(this).find("span").text();
-        const completed = $(this).find("span").hasClass("completed");
-        tasks.push({ text, completed });
-      });
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
-  
-    // Add task to the DOM
-    function addTaskToDOM(text, completed = false) {
-      const taskItem = $(`
-        <li class="task-item">
-          <span class="${completed ? 'completed' : ''}">${text}</span>
-          <button class="edit-btn">Edit</button>
-          <button class="delete-btn">Delete</button>
-        </li>
-      `);
-      $("#taskList").append(taskItem);
-  
-      // Add event listeners for marking complete and deleting
-      taskItem.find("span").on("click", function () {
-        $(this).toggleClass("completed");
-        saveTasks();
-      });
-      taskItem.find(".delete-btn").on("click", function () {
-        $(this).parent().fadeOut(300, function () {
-          $(this).remove();
-          saveTasks();
-        });
-      });
-          // Edit task
-    taskItem.find(".edit-btn").on("click", function () {
-        const taskSpan = $(this).siblings("span");
-        const currentText = taskSpan.text();
-        const newText = prompt("Edit your task:", currentText);
-        if (newText !== null && newText.trim() !== "") {
-          taskSpan.text(newText.trim());
-          saveTasks();
-        }
-      });
-    }
-  
-    // Add task on button click
-    $("#addTaskBtn").on("click", function () {
-      const taskText = $("#taskInput").val().trim();
-      if (taskText !== "") {
-        addTaskToDOM(taskText);
-        saveTasks();
-        $("#taskInput").val("");
-      }
+
+    const editButton = document.createElement("button");
+    editButton.classList.add("edit-btn");
+    editButton.textContent = "Edit";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.classList.add("delete-btn");
+    deleteButton.textContent = "Delete";
+
+    taskItem.appendChild(taskSpan);
+    taskItem.appendChild(editButton);
+    taskItem.appendChild(deleteButton);
+    taskList.appendChild(taskItem);
+
+    taskSpan.addEventListener("click", () => {
+      taskSpan.classList.toggle("completed");
+      saveTasks();
     });
 
-    $("#clearAllBtn").on("click", function () {
-        if (confirm("Are you sure you want to clear all tasks?")) {
-            $("#taskList").empty(); // Remove all tasks from the DOM
-            localStorage.removeItem("tasks"); // Clear tasks from localStorage
-        }
+    deleteButton.addEventListener("click", () => {
+      taskItem.style.transition = "opacity 0.3s ease-out";
+      taskItem.style.opacity = "0";
+      setTimeout(() => {
+        taskItem.remove();
+        saveTasks();
+      }, 300);
     });
-      
-    // Load tasks on page load
-    loadTasks();
+
+    editButton.addEventListener("click", () => {
+      const currentText = taskSpan.textContent;
+      const newText = prompt("Edit your task:", currentText);
+      if (newText !== null && newText.trim() !== "") {
+        taskSpan.textContent = newText.trim();
+        saveTasks();
+      }
+    });
+  }
+
+  document.getElementById("addTaskBtn").addEventListener("click", () => {
+    const taskInput = document.getElementById("taskInput");
+    const taskText = taskInput.value.trim();
+    if (taskText !== "") {
+      addTaskToDOM(taskText);
+      saveTasks();
+      taskInput.value = "";
+    }
   });
-  
+
+  document.getElementById("clearAllBtn").addEventListener("click", () => {
+    if (confirm("Are you sure you want to clear all tasks?")) {
+      const taskList = document.getElementById("taskList");
+      taskList.innerHTML = ""; 
+      localStorage.removeItem("tasks"); 
+    }
+  });
+
+  loadTasks();
+});
